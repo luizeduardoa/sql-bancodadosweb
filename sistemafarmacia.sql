@@ -404,3 +404,73 @@ BEGIN
 
 --Executando a função acima
 SELECT qtd_produtos_farmacia('12345678000199');
+
+--Trigger: impedir quantidade negativa (BEFORE INSERT)
+DELIMITER $$
+
+CREATE TRIGGER trg_before_insert_produto
+BEFORE INSERT ON produto
+FOR EACH ROW
+BEGIN
+    IF NEW.quantproduto < 0 THEN
+    SET NEW.quantproduto = 0;
+    END IF;
+    END$$
+
+    DELIMITER ;
+    
+
+    --Testando inserir um valor negativo
+    INSERT INTO produto (quantproduto, valorproduto, cnpj_farmacia)
+    VALUES |(-10, 20.00, '12345678000199');
+
+    --Trigger: impedir valor negativo (BEFORE UPDATE)
+
+    DELIMITER $$
+
+    CREATE TRIGGER trg_before_update_produto
+      BEFORE UPDATE ON produto
+      FOR EACH ROW
+      BEGIN
+        IF NEW.valorproduto < 0 THEN
+        SET NEW.valorproduto = OLD.valorproduto;
+        END IF;
+        END$$
+
+        DELIMITER ;
+    
+    --testando o código acima
+    UPDATE produto
+    SET valorproduto = -25.00
+    WHERE codproduto = 1;
+
+    --View: farmácia + produto 
+    CREATE VIEW vw_farmacia_produto AS
+    SELECT
+    f.nomefarmacia,
+    f.cidade,
+    p.codproduto,
+    p.quantproduto,
+    p.valorproduto
+    FROM farmacia f 
+    INNER JOIN produto p
+    ON f.cnpj = p.cnpj_farmacia;
+
+    --testando o codigo 
+    SELECT * FROM vw_farmacia_produto;
+
+     --View: farmácia + produto 
+    CREATE VIEW vw_farmacia_produto AS
+    SELECT
+    fa.nomefarmacia,
+    fa.cidade,
+    fa.nomefarmaceutico
+    FROM farmacia fa
+    INNER JOIN farmaceutico fm
+    ON fa.cnpj = fm.cnpj_farmacia;
+
+    --testando o codigo acima
+    CREATE VIEW vw_produto_caros AS
+    SELECT *
+    FROM produto
+    WHERE valorproduto > 30;
